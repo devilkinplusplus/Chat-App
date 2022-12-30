@@ -5,6 +5,95 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat</title>
+    <link rel="stylesheet" href="../styles/bootstrap.min.css" />
+    <script src="../scripts/bootstrap.min.js"></script>
+    <script src="../scripts/jquery.min.js"></script>
+    <script src="../scripts/signalr.min.js"></script>
   </head>
-  <body></body>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-3 mt-2">
+          <input
+            type="text"
+            class="form-control disabled"
+            disabled
+            placeholder="Create Group"
+          />
+          <button type="submit" class="btn btn-light mt-2 disabled">
+            Create
+          </button>
+        </div>
+
+        <div class="col-6 mt-2">
+          <textarea
+            name="text"
+            id="textId"
+            cols="30"
+            rows="3"
+            class="form-control"
+            placeholder="Type here.."
+          ></textarea>
+          <div class="text-end">
+            <button type="submit" class="btn btn-success mt-1">Send</button>
+          </div>
+        </div>
+
+        <div class="col-3 mt-2">
+          <input type="text" class="form-control" placeholder="Your Name" />
+          <button type="button" class="btn btn-success mt-1 btn-sm">
+            Go Live
+          </button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-3">
+          <select
+            name="groups"
+            id="grId"
+            size="5"
+            class="form-select disabled mt-2"
+            multiple
+          >
+            <option value="-1" selected>Rooms</option>
+          </select>
+          <button type="button" class="btn btn-primary disabled mt-2">
+            Go Selected Rooms
+          </button>
+          <!--Clients-->
+          <div class="list-group mt-2">
+            <a class="list-group-item list-group-item-action user-active">
+              All
+            </a>
+            <a
+              class="list-group-item list-group-item-action user-active"
+              aria-current="true"
+            >
+              New
+            </a>
+          </div>
+          <!--Clients-->
+        </div>
+        <div class="col-6">
+          <!--Receiving-->
+          <div class="list-group mt-4">
+            <a
+              class="list-group-item list-group-item-action"
+              aria-current="true"
+            >
+              <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">Murad</h5>
+                <h5 class="mb-2">You</h5>
+              </div>
+              <p class="mb-1 lead">
+                Lorem ipsum dolor sit amet consectetur, adipisicing elit.
+                Similique id consectetur officia animi quis autem ut?
+              </p>
+            </a>
+          </div>
+          <!--Receiving-->
+        </div>
+      </div>
+    </div>
+  </body>
 </html>
