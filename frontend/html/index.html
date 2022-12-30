@@ -9,40 +9,170 @@
     <script src="../scripts/bootstrap.min.js"></script>
     <script src="../scripts/jquery.min.js"></script>
     <script src="../scripts/signalr.min.js"></script>
+    <script>
+      $(document).ready(() => {
+        const connection = new signalR.HubConnectionBuilder()
+          .withUrl("https://localhost:7087/chathub")
+          .build();
+
+        connection.start();
+
+        $(".disabled").attr("disabled", "disabled");
+
+        $("body").on("click", ".users", function () {
+          $(".users").each((index, item) => {
+            item.classList.remove("active");
+          });
+          $(this).addClass("active");
+        });
+
+        $("#btnJoin").click(() => {
+          const nickName = $("#txtNick").val();
+          connection
+            .invoke("GetNickName", nickName)
+            .catch((error) => console.log(error));
+          $(".disabled").removeAttr("disabled");
+        });
+
+        connection.on("clientJoined", (nickName) => {
+          $("#alertId").html(`${nickName} joined the chat`);
+          $("#alertId").fadeIn(2000, () => {
+            setTimeout(() => {
+              $("#alertId").fadeOut(2000);
+            }, 2000);
+          });
+        });
+
+        connection.on("clients", (clients) => {
+          $("#clients").html("");
+          $.each(clients, (index, client) => {
+            const user = $(".users").first().clone();
+            user.removeClass("active");
+            user.html(`${client.nickName}`);
+            $("#clients").append(user);
+          });
+        });
+
+        connection.on("receiveMessage", (message, nickName) => {
+          const messageUi = $(".message").clone();
+          messageUi.removeClass("message"); //for stop cloning regularly
+          messageUi.removeAttr("style");
+          messageUi.find("h5")[0].innerHTML = nickName;
+          messageUi.find("p").html(message);
+          $(".messageList").append(messageUi);
+        });
+
+        $("#sendId").click(() => {
+          const clientName = $(".users.active").first().html();
+          const message = $("#messageId").val();
+          connection.invoke("SendMessageAsync", message, clientName);
+
+          const messageUi = $(".message").clone();
+          messageUi.removeAttr("style");
+          messageUi.removeClass("message"); //for stop cloning regularly
+          messageUi.find("h5")[1].innerHTML = "You";
+          messageUi.find("p").html(message);
+          $(".messageList").append(messageUi);
+        });
+
+        connection.on("receiveGroup", (groupName, nickName) => {
+          $("#alertGroupId").html(`${nickName} created ${groupName} group`);
+          $("#alertGroupId").fadeIn(2000, () => {
+            setTimeout(() => {
+              $("#alertGroupId").fadeOut(2000);
+            }, 2000);
+          });
+          $("#groups").append(
+            `<option value="${groupName}">${groupName}</option>`
+          );
+        });
+
+        $("#createRoom").click(() => {
+          const groupName = $("#txtGroupName").val();
+          connection.invoke("AddGroup", groupName);
+        });
+
+        $("#joinRooms").click(() => {
+          let groupNames = [];
+          $("#groups option:selected").map((i, e) => {
+            groupNames.push(e.innerHTML);
+          });
+          connection.invoke("AddClientToGroup", groupNames);
+        });
+
+        let _groupName = "";
+        $("#groups").change(function () {
+          const groupName = $(this).val();
+          _groupName = groupName[0];
+          connection.invoke("GetClientToGroup", groupName[0]);
+        });
+
+        $("#sendGroupId").click((nickName) => {
+          const message = $("#messageId").val();
+          if (_groupName !== "") {
+            connection.invoke("SendGroupMessageAsync", _groupName, message);
+          }
+        });
+      });
+    </script>
   </head>
   <body>
     <div class="container">
       <div class="row">
         <div class="col-3 mt-2">
+          <div
+            class="alert alert-primary"
+            id="alertGroupId"
+            style="display: none"
+          ></div>
           <input
             type="text"
             class="form-control disabled"
-            disabled
             placeholder="Create Group"
+            id="txtGroupName"
           />
-          <button type="submit" class="btn btn-light mt-2 disabled">
+          <button type="button" id="createRoom" class="btn btn-light mt-2">
             Create
           </button>
         </div>
 
         <div class="col-6 mt-2">
+          <div
+            class="alert alert-success"
+            id="alertId"
+            style="display: none"
+          ></div>
           <textarea
             name="text"
-            id="textId"
+            id="messageId"
             cols="30"
             rows="3"
-            class="form-control"
+            class="form-control disabled"
             placeholder="Type here.."
           ></textarea>
           <div class="text-end">
-            <button type="submit" class="btn btn-success mt-1">Send</button>
+            <button type="submit" class="btn btn-warning mt-1" id="sendGroupId">
+              Send to Group
+            </button>
+            <button type="submit" class="btn btn-success mt-1" id="sendId">
+              Send
+            </button>
           </div>
         </div>
 
         <div class="col-3 mt-2">
-          <input type="text" class="form-control" placeholder="Your Name" />
-          <button type="button" class="btn btn-success mt-1 btn-sm">
-            Go Live
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Your Name"
+            id="txtNick"
+          />
+          <button
+            type="button"
+            class="btn btn-success mt-1 btn-sm"
+            id="btnJoin"
+          >
+            Enter Chat
           </button>
         </div>
       </div>
@@ -50,45 +180,38 @@
         <div class="col-3">
           <select
             name="groups"
-            id="grId"
+            id="groups"
             size="5"
             class="form-select disabled mt-2"
             multiple
           >
             <option value="-1" selected>Rooms</option>
           </select>
-          <button type="button" class="btn btn-primary disabled mt-2">
-            Go Selected Rooms
+          <button type="button" class="btn btn-primary mt-2" id="joinRooms">
+            Join Selected Rooms
           </button>
           <!--Clients-->
-          <div class="list-group mt-2">
-            <a class="list-group-item list-group-item-action user-active">
+          <div class="list-group mt-2 clients">
+            <a class="list-group-item list-group-item-action users active">
               All
             </a>
-            <a
-              class="list-group-item list-group-item-action user-active"
-              aria-current="true"
-            >
-              New
-            </a>
+            <div id="clients"></div>
           </div>
           <!--Clients-->
         </div>
         <div class="col-6">
           <!--Receiving-->
-          <div class="list-group mt-4">
+          <div class="list-group mt-4 messageList">
             <a
-              class="list-group-item list-group-item-action"
+              style="display: none"
+              class="list-group-item list-group-item-action message"
               aria-current="true"
             >
               <div class="d-flex w-100 justify-content-between">
-                <h5 class="mb-1">Murad</h5>
-                <h5 class="mb-2">You</h5>
+                <h5 class="mb-1"></h5>
+                <h5 class="mb-2"></h5>
               </div>
-              <p class="mb-1 lead">
-                Lorem ipsum dolor sit amet consectetur, adipisicing elit.
-                Similique id consectetur officia animi quis autem ut?
-              </p>
+              <p class="mb-1 lead"></p>
             </a>
           </div>
           <!--Receiving-->
