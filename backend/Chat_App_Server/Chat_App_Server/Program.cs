@@ -1,14 +1,14 @@
 using Chat_App_Server.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
-
+//enable cors for accessing from the ui
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>policy
         .AllowCredentials()
         .AllowAnyHeader()
         .AllowAnyMethod()
         .SetIsOriginAllowed(x => true)
 ));
-
+//add signalR service
 builder.Services.AddSignalR();
 
 var app = builder.Build();
@@ -23,12 +23,13 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
+//use cors
 app.UseCors();
 app.UseRouting();
 
 app.UseAuthorization();
 
+//For using signalR
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapHub<ChatHub>("/chathub");

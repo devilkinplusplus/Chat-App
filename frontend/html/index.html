@@ -11,12 +11,13 @@
     <script src="../scripts/signalr.min.js"></script>
     <script>
       $(document).ready(() => {
+        //create connection address
         const connection = new signalR.HubConnectionBuilder()
           .withUrl("https://localhost:7087/chathub")
           .build();
 
         connection.start();
-
+        //disable all text boxes and buttons unless the user is logged in
         $(".disabled").attr("disabled", "disabled");
 
         $("body").on("click", ".users", function () {
@@ -26,15 +27,18 @@
           $(this).addClass("active");
         });
 
+        //if user join and clicked button activate disabled buttons and textboxes
         $("#btnJoin").click(() => {
+          //get nickname from server
           const nickName = $("#txtNick").val();
           connection
             .invoke("GetNickName", nickName)
             .catch((error) => console.log(error));
           $(".disabled").removeAttr("disabled");
         });
-
+        //create a clientJoined method and pass the nickName parameter as it passes through the server
         connection.on("clientJoined", (nickName) => {
+          //get nickname and design it as you like
           $("#alertId").html(`${nickName} joined the chat`);
           $("#alertId").fadeIn(2000, () => {
             setTimeout(() => {
@@ -42,7 +46,7 @@
             }, 2000);
           });
         });
-
+        //create a clients method and pass the clients parameter as it passes through the server
         connection.on("clients", (clients) => {
           $("#clients").html("");
           $.each(clients, (index, client) => {
@@ -52,7 +56,7 @@
             $("#clients").append(user);
           });
         });
-
+        //create a receiveMessage method and pass the message and nickName parameter as it passes through the server
         connection.on("receiveMessage", (message, nickName) => {
           const messageUi = $(".message").clone();
           messageUi.removeClass("message"); //for stop cloning regularly
@@ -61,21 +65,25 @@
           messageUi.find("p").html(message);
           $(".messageList").append(messageUi);
         });
-
+        //show our message and nickname to users as you want
         $("#sendId").click(() => {
           const clientName = $(".users.active").first().html();
           const message = $("#messageId").val();
+          //from server
           connection.invoke("SendMessageAsync", message, clientName);
 
           const messageUi = $(".message").clone();
           messageUi.removeAttr("style");
           messageUi.removeClass("message"); //for stop cloning regularly
+          //who sent message
           messageUi.find("h5")[1].innerHTML = "You";
+          //message content
           messageUi.find("p").html(message);
           $(".messageList").append(messageUi);
         });
-
+        //get group messages from server
         connection.on("receiveGroup", (groupName, nickName) => {
+          //show as you like
           $("#alertGroupId").html(`${nickName} created ${groupName} group`);
           $("#alertGroupId").fadeIn(2000, () => {
             setTimeout(() => {
@@ -86,14 +94,16 @@
             `<option value="${groupName}">${groupName}</option>`
           );
         });
-
+        //when you click create group, data comes from the server
         $("#createRoom").click(() => {
           const groupName = $("#txtGroupName").val();
+          //from server
           connection.invoke("AddGroup", groupName);
         });
-
+        //join group
         $("#joinRooms").click(() => {
           let groupNames = [];
+          //select which group do you wanna join
           $("#groups option:selected").map((i, e) => {
             groupNames.push(e.innerHTML);
           });
@@ -106,7 +116,7 @@
           _groupName = groupName[0];
           connection.invoke("GetClientToGroup", groupName[0]);
         });
-
+        //send message to all of group participants
         $("#sendGroupId").click((nickName) => {
           const message = $("#messageId").val();
           if (_groupName !== "") {
